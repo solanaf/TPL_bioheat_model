@@ -37,7 +37,7 @@ tau_v   = [30 30 30];            % s
 Qm0 = [800 1200 600];
 
 % Blood perfusion (1/s)
-wb = [0 0.8 0.8];
+wb = [0 0.008 0.008];
 rho_b = 1056; cb = 4000; Tb = 37; % blood
 
 % Water vaporization and diffusion (all constants)
@@ -90,11 +90,14 @@ T_tumor = zeros(1, Nt);
 
 %% 3. MAIN TIME LOOP
 
-for t = 1:10
+for t = 1:Nt
     % --- Heat sources (at current T) ---
     Qm = zeros(Nx,1); Qd = zeros(Nx,1); Qb = zeros(Nx,1); Qv = zeros(Nx,1); Qr = zeros(Nx,1);
+
     for i = 1:Nx
         L = layer(i);
+
+        %% HEAT SOURCES
 
         % Metabolic
         Qm(i) = Qm0(L) * (1 + (T(i) - T0(L))/10);
@@ -117,19 +120,25 @@ for t = 1:10
         % External device (all layers, spatial Gaussian)
         Qr0 = rho(L)*S*P;
         Qr(i) = Qr0 * exp(-a0 * (x(i)-x_star)^2);
-    end
+        end
 
-    Q_total = Qm + Qd + Qb + Qv + Qr;
+        Q_total = Qm + Qd + Qb + Qv + Qr;
 
-    % --- Update T_new using explicit Euler (illustrative) with TPL memory (2nd order) ---
-    % For pedagogical clarity, below is a simplified TPL scheme using 2-level time stepping:
-    for i = 2:Nx-1
+        %% STEP UPDATE %%
+            % --- Update T_new using explicit Euler (illustrative) with TPL memory (2nd order) ---
+            % For pedagogical clarity, below is a simplified TPL scheme using 2-level time stepping:
         L = layer(i);
         rho_i = rho(L); c_i = c(L); k_i = k(L);
         tq = tau_q(L); tT = tau_T(L); tv = tau_v(L);
 
         % Discrete spatial 2nd derivative
-        d2Tdx2 = (T(i+1) - 2*T(i) + T(i-1)) / dx^2;
+        if i == 1
+            d2Tdx2 = (T(i+1) - 2*T(i) + 22) / dx^2; %% Assuming room temp outside of skin
+        elseif i == Nx
+            d2Tdx2 = (37 - 2*T(i) + 22) / dx^2; %% Assuming body temp at end of tissue
+        else
+            d2Tdx2 = (T(i+1) - 2*T(i) + T(i-1)) / dx^2;
+        end
 
         % Temporal 1st and 2nd derivatives
         dTdt = (k(L) * (d2Tdx2) + Q_total(i)) / (rho(L) * c(L));
@@ -146,11 +155,10 @@ for t = 1:10
         % Main update (simplified; true TPL requires implicit or staggered multi-step)
         T_new(i) = T(i) + dt * (dTdt + tau_q(L) .* dTdt - tau_T(L) .* d2Tdt2 + (k(L) + k_star(L) .* tau_v(L)) .* dTdt);
 
-        % T_new(i) = 2*T(i) - Tnm1 + (dt^2 / (rho_i * c_i)) * (k_i * d2Tdx2 + Q_total(i));
     end
 
     % --- Boundary conditions ---
-    T_new(1) = T0(1);             % Dirichlet (left, heated surface)
+    % T_new(1) = T0(1);             % Dirichlet (left side is constant?)
     T_new(end) = T_new(end-1);     % Neumann (right, insulated)
 
     % --- INTERFACE ENFORCEMENT ---
