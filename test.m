@@ -20,6 +20,10 @@ layer(x <= L_epi) = 1;                                  % Epidermis
 layer(x > L_epi & x <= L_epi + L_derm) = 2;             % Dermis
 layer(x > L_epi + L_derm) = 3;                          % Subcutaneous
 
+% Interface locations
+idx1 = find(layer(1:end-1)==1 & layer(2:end)==2, 1, 'last')+1;
+idx2 = find(layer(1:end-1)==2 & layer(2:end)==3, 1, 'last')+1;
+
 % TPL and material parameters (per layer)
 rho     = [1200 1100 1000];         % kg/m^3
 c       = [3500 3700 3800];         % J/kg°C
@@ -56,14 +60,19 @@ Qr0 = 2e5; a0 = 40000; % tune a0 for spot size
 x_star = 0.008; % m (tumor location)
 
 % Simulation settings
-T0 = 37;    % °C, initial
+T0 = [34 36 37];    % °C, initial
+% dTdt0 = 0; % IC
+% d2Tdt20 = 0; % IC
 Nt = 2000;  % time steps
 dt = 0.01;  % s
 time = (0:Nt-1)*dt;
 
 %% 2. INITIALIZATION
 
-T = ones(Nx,1)*T0;       % initial temp
+T = ones(Nx,1);          % initial temp
+T(1:idx1-1) = T(idx1-1)*T0(1);
+T(idx1:idx2-1) = T(idx1:idx2-1)*T0(2);
+T(idx2:end) = T(idx2:end)*T0(3);
 T_old = T;               % for second time-level
 T_new = T;               % updated at each step
 
@@ -86,10 +95,10 @@ for t = 1:Nt
         L = layer(i);
 
         % Metabolic
-        Qm(i) = Qm0(L) * (1 + (T(i) - T0)/10);
+        Qm(i) = Qm0(L) * (1 + (T(i) - T0(L))/10);
 
         % Water diffusion
-        Qd(i) = (Df(L) * cw * (rho_s - rho_c) / nabla_r2) * (T(i) - T0);
+        Qd(i) = (Df(L) * cw * (rho_s - rho_c) / nabla_r2) * (T(i) - T0(L));
 
         % Blood perfusion (dermis, subq)
         if L > 1
@@ -119,24 +128,29 @@ for t = 1:Nt
         % Discrete spatial 2nd derivative
         d2Tdx2 = (T(i+1) - 2*T(i) + T(i-1)) / dx^2;
 
-        % Simple TPL finite difference (needs refinement for strict TPL, see note)
-        % Central difference in time for 2nd order
-        if t > 2
-            Tnm1 = T_history(i,3); % n-1
-        else
-            Tnm1 = T0;
-        end
+        % Temporal 1st and 2nd derivatives
+        dTdt = (k(L) * (d2Tdx2) + Q_total(i)) / (rho(L) * c(L));
+        d2Tdt2 = (k_star(L) * (d2Tdx2)) / (rho(L) * c(L));
+
+        % % Simple TPL finite difference (needs refinement for strict TPL, see note)
+        % % Central difference in time for 2nd order
+        % if t > 2
+        %     Tnm1 = T_history(i,3); % n-1
+        % else
+        %     Tnm1 = T0(L);
+        % end
+
         % Main update (simplified; true TPL requires implicit or staggered multi-step)
-        T_new(i) = 2*T(i) - Tnm1 + (dt^2 / (rho_i * c_i)) * (k_i * d2Tdx2 + Q_total(i));
+        T_new(i) = T(i) + dt * (dTdt + tau_q(L) .* dTdt - tau_T(L) .* d2Tdt2 + (k(L) + k_star(L) .* tau_v(L)) .* dTdt);
+
+        % T_new(i) = 2*T(i) - Tnm1 + (dt^2 / (rho_i * c_i)) * (k_i * d2Tdx2 + Q_total(i));
     end
 
     % --- Boundary conditions ---
-    T_new(1) = T0 + 8;             % Dirichlet (left, heated surface)
+    T_new(1) = T0(1);             % Dirichlet (left, heated surface)
     T_new(end) = T_new(end-1);     % Neumann (right, insulated)
 
     % --- INTERFACE ENFORCEMENT ---
-    idx1 = find(layer(1:end-1)==1 & layer(2:end)==2, 1, 'last')+1;
-    idx2 = find(layer(1:end-1)==2 & layer(2:end)==3, 1, 'last')+1;
 
     % Epidermis-dermis
     kL = k(layer(idx1-1)); kR = k(layer(idx1));
