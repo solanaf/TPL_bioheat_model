@@ -7,7 +7,7 @@ epidermis, dermis, subcutaneous
 * blood perfusion (dermis, subcutaneous)
 * metabolic heat (all)
 * water diffusion (all)
-* vaporization (dermis)
+* vaporization (epidermis)
 * hyperthermia device (modeled as Gaussian volume, targeted at tumor location)
 
 ## Reference Papers:
