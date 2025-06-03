@@ -25,20 +25,20 @@ idx1 = find(layer(1:end-1)==1 & layer(2:end)==2, 1, 'last')+1;
 idx2 = find(layer(1:end-1)==2 & layer(2:end)==3, 1, 'last')+1;
 
 % TPL and material parameters (per layer)
-rho     = [1200 1100 1000];         % kg/m^3
-c       = [3500 3700 3800];         % J/kg°C
+rho     = [1150 1116 900];         % kg/m^3
+c       = [3590 3300 2500];         % J/kg°C
 k       = [0.2 0.45 0.3];           % W/m°C
-k_star  = [0.01 0.01 0.01];         % W/m°C/s (dynamic, small)
-tau_q   = [5 10 20];                % s
-tau_T   = [1 5 15];                 % s
-tau_v   = [0.5 2 10];               % s
+k_star  = [0.1 0.1 0.1];         % W/m°C/s (dynamic, small)
+tau_q   = [28 28 28];            % s
+tau_T   = [2 2 20];            % s
+tau_v   = [30 30 30];            % s
 
 % Metabolic heat (baseline, W/m^3)
 Qm0 = [800 1200 600];
 
 % Blood perfusion (1/s)
-wb = [0 0.0008 0.001];
-rho_b = 1060; cb = 4000; Tb = 38; % blood
+wb = [0 0.8 0.8];
+rho_b = 1056; cb = 4000; Tb = 37; % blood
 
 % Water vaporization and diffusion (all constants)
 Da = 2.5e-5;    % m^2/s (air)
@@ -56,7 +56,10 @@ rho_c = 1000;   % kg/m^3
 nabla_r2 = (L_total/3)^2;
 
 % External heat source (tumor device)
-Qr0 = 2e5; a0 = 40000; % tune a0 for spot size
+P = 30; % Watts
+S = 12.5; % 1/kg
+a0 = -127; % (1/m) tune a0 for spot size
+% Qr0 will get calculated on a per-layer basis
 x_star = 0.008; % m (tumor location)
 
 % Simulation settings
@@ -87,8 +90,7 @@ T_tumor = zeros(1, Nt);
 
 %% 3. MAIN TIME LOOP
 
-for t = 1:Nt
-
+for t = 1:10
     % --- Heat sources (at current T) ---
     Qm = zeros(Nx,1); Qd = zeros(Nx,1); Qb = zeros(Nx,1); Qv = zeros(Nx,1); Qr = zeros(Nx,1);
     for i = 1:Nx
@@ -113,6 +115,7 @@ for t = 1:Nt
         end
 
         % External device (all layers, spatial Gaussian)
+        Qr0 = rho(L)*S*P;
         Qr(i) = Qr0 * exp(-a0 * (x(i)-x_star)^2);
     end
 
