@@ -6,22 +6,50 @@
 
 clear; clc;
 
-%% 1) CONSTANTS AND PARAMETERS
-% ------------ Physical Parameters ------------
-rho    = [1150 1116 900];    % [kg/m^3]  Tissue density (layers)
-c      = [3590 3300 2500];    % [J/(kg·°C)]  Tissue specific heat
+%% 1) DISCRETIZE TIME & SPATIAL DOMAINS
+% Skin Layer thickness
+L_epi = 0.0015;   % Epidermis (1.5 mm)
+L_derm = 0.0035;  % Dermis (3.5 mm)
+L_subq = 0.01;    % Subcutaneous (10 mm)
+Lx = L_epi + L_derm + L_subq; % Domain Length
 
-k      = [0.2 0.45 0.3];     % [W/(m·°C)]  Thermal conductivity
+x_ast  = 0.008;   % [m]   Tumor center (midpoint of 0.05 m)
+
+dx     = 0.0005;  % [m]   Spatial step → now 21 nodes from 0 to 0.05
+dt     = 0.015;    % [s]   Time step (smaller for stability)
+max_time = 10;   % plot up to 10s
+time_steps = round(max_time/dt) + 1; % ensures we reach exactly 10 s: (n−1)*dt = 10
+time = 0:dt:max_time+dt;
+
+x  = 0:dx:Lx;          % x = [0, 0.0025, 0.005, …, 0.05]
+nx = numel(x);
+
+% Define Layers
+layer = zeros(1, nx);
+layer(x <= L_epi) = 1;                                  % Epidermis
+layer(x > L_epi & x <= L_epi + L_derm) = 2;             % Dermis
+layer(x > L_epi + L_derm) = 3;                          % Subcutaneous
+
+% Find index of tumor center (closest grid point to x_ast)
+[~, iTumor] = min(abs(x - x_ast));
+
+%% 2) CONSTANTS AND PARAMETERS
+% ------------ Physical Parameters ------------
+% Skin Layer params
+rho    = [1150 1116 900];   % [kg/m^3]  Tissue density (layers)
+c      = [3590 3300 2500];  % [J/(kg·°C)]  Tissue specific heat
+k      = [0.2 0.45 0.3];    % [W/(m·°C)]  Thermal conductivity
 k_star = [0.1 0.1 0.1];     % [W/(m·°C·s)]  Hyperbolic‐term coefficient
 
-h      = 4.5;     % [W/(m^2·°C)]  Convective coefficient at boundaries
+% Blood params
+h      = 4.5;     % [W/(m^2·°C)]    Convective coefficient at boundaries
 wb     = 0.0098;  % [1/s]           Blood perfusion
 rho_b  = 1056;    % [kg/m^3]        Blood density
 cb     = 4000;    % [J/(kg·°C)]     Blood specific heat
 
 Qm0    = 50.65;   % [W/m^3]         Metabolic heat (uniform)
 Tb     = 37;      % [°C]            Arterial blood temperature
-Tl     = [37 37 37];      % [°C]            Ambient/tissue reference
+Tl     = [37 37 37];      % [°C]    Ambient/tissue reference
 T0     = 37;      % [°C]            Initial tissue temperature
 
 % ------------ Gaussian‐source parameters ------------
@@ -29,14 +57,6 @@ T0     = 37;      % [°C]            Initial tissue temperature
 S      = 1;       % “per‐kg” scaling factor
 P      = 30;      % “power” factor (tune as needed)
 a0     = 1e5;     % [1/m^2]        Gaussian width control
-x_ast  = 0.008;   % [m]            Tumor center (midpoint of 0.05 m)
-
-Lx     = 0.015;    % [m]   Domain length (50 mm)
-dx     = 0.0005;  % [m]   Spatial step → now 21 nodes from 0 to 0.05
-dt     = 0.015;    % [s]   Time step (smaller for stability)
-max_time = 10;   % plot up to 10s
-time_steps = round(max_time/dt) + 1; % ensures we reach exactly 10 s: (n−1)*dt = 10
-time = 0:dt:max_time+dt;
 
 % ------------ Water vaporization and diffusion ------------
 Da = 2.5e-5;    % m^2/s (air)
@@ -53,43 +73,24 @@ rho_s = 1100;   % kg/m^3
 rho_c = 1000;   % kg/m^3
 nabla_r2 = (Lx/3)^2;
 
-% Hyperbolic relaxation times
+% ---------- Hyperbolic relaxation times ---------------
 tau_q = 28;   % [s]
 tau_T = 3;   % [s]
 tau_v = 1;   % [s]
 
-%% 2) DISCRETIZE 1D DOMAIN
-% Skin Layer thickness
-L_epi = 0.0015;   % Epidermis (1.5 mm)
-L_derm = 0.0035;  % Dermis (3.5 mm)
-L_subq = 0.01;    % Subcutaneous (10 mm)
-Lx = L_epi + L_derm + L_subq;
-
-x  = 0:dx:Lx;          % x = [0, 0.0025, 0.005, …, 0.05]
-nx = numel(x);
-
-% Define Layers
-layer = zeros(1, nx);
-layer(x <= L_epi) = 1;                                  % Epidermis
-layer(x > L_epi & x <= L_epi + L_derm) = 2;             % Dermis
-layer(x > L_epi + L_derm) = 3;                          % Subcutaneous
-
-% Find index of tumor center (closest grid point to x_ast)
-[~, iTumor] = min(abs(x - x_ast));
-
+%% 3) INITIALIZE STORAGE FOR “SNAPSHOTS”
 % Snapshot times (in seconds) and their corresponding loop‐indices
 snapshot_times = [2.5, 5.0, 7.5, 10.0];
 snap_idx = round(snapshot_times/dt) + 1;
 % e.g., 2.5/0.01 = 250 → +1 = 251 ⇒ t = (251−1)*0.01 = 2.50 s
 
-% Tumor temp array
-T_tumor = zeros(1, time_steps);
-
-%% 3) INITIALIZE STORAGE FOR “SNAPSHOTS”
 T_snapshots = zeros(nx, numel(snapshot_times));  
 % Each column j holds T(x) at t = snapshot_times(j)
 
-% Initialize temperature fields at t=0
+% Tumor temp array
+T_tumor = zeros(1, time_steps);
+
+% --------- Initialize temperature fields at t=0 -------------
 T     = ones(nx,1) * T0;  
 T_new = T;   
 dTdt   = zeros(nx,1);
@@ -160,7 +161,7 @@ for n = 1:time_steps
         T_snapshots(:, idx_this) = T;
     end
 
-    % --- Store T at tumor location ---
+    % (g) Store T at tumor location
     T_tumor(n) = T_new(iTumor);
 end
 
@@ -183,7 +184,7 @@ grid on;
 hold off;
 
 
-%% 4. PLOT: TUMOR TEMPERATURE VS TIME
+%% 6. PLOT: TUMOR TEMPERATURE VS TIME
 figure;
 plot(time, T_tumor, 'r', 'LineWidth', 2);
 xlabel('Time (s)');
