@@ -134,7 +134,7 @@ for t = 1:2
         if i == 1
             d2Tdx2 = (T(i+1) - 2*T(i) + 22) / dx^2; %% Assuming room temp outside of skin - BC
         elseif i == Nx
-            d2Tdx2 = (37 - 2*T(i) + 22) / dx^2; %% Assuming body temp at end of tissue - BC
+            d2Tdx2 = (37 - 2*T(i) + T(i-1)) / dx^2; %% Assuming body temp at end of tissue - BC
         else
             d2Tdx2 = (T(i+1) - 2*T(i) + T(i-1)) / dx^2;
         end
