@@ -20,7 +20,7 @@ layer(x <= L_epi) = 1;                                  % Epidermis
 layer(x > L_epi & x <= L_epi + L_derm) = 2;             % Dermis
 layer(x > L_epi + L_derm) = 3;                          % Subcutaneous
 
-% Interface locations
+% Layers' Interface locations
 idx1 = find(layer(1:end-1)==1 & layer(2:end)==2, 1, 'last')+1;
 idx2 = find(layer(1:end-1)==2 & layer(2:end)==3, 1, 'last')+1;
 
@@ -34,7 +34,7 @@ tau_T   = [2 2 20];            % s
 tau_v   = [30 30 30];            % s
 
 % Metabolic heat (baseline, W/m^3)
-Qm0 = [800 1200 600];
+Qm0 = [50.65 50.65 50.65];
 
 % Blood perfusion (1/s)
 wb = [0 0.008 0.008];
@@ -90,14 +90,14 @@ T_tumor = zeros(1, Nt);
 
 %% 3. MAIN TIME LOOP
 
-for t = 1:Nt
+for t = 1:2
     % --- Heat sources (at current T) ---
     Qm = zeros(Nx,1); Qd = zeros(Nx,1); Qb = zeros(Nx,1); Qv = zeros(Nx,1); Qr = zeros(Nx,1);
 
     for i = 1:Nx
         L = layer(i);
 
-        %% HEAT SOURCES
+        %% CALCULATE HEAT SOURCES %%
 
         % Metabolic
         Qm(i) = Qm0(L) * (1 + (T(i) - T0(L))/10);
@@ -120,11 +120,10 @@ for t = 1:Nt
         % External device (all layers, spatial Gaussian)
         Qr0 = rho(L)*S*P;
         Qr(i) = Qr0 * exp(-a0 * (x(i)-x_star)^2);
-        end
 
         Q_total = Qm + Qd + Qb + Qv + Qr;
 
-        %% STEP UPDATE %%
+        %% FINITE DIFFERENCE METHODS - STEP UPDATE %%
             % --- Update T_new using explicit Euler (illustrative) with TPL memory (2nd order) ---
             % For pedagogical clarity, below is a simplified TPL scheme using 2-level time stepping:
         L = layer(i);
@@ -133,9 +132,9 @@ for t = 1:Nt
 
         % Discrete spatial 2nd derivative
         if i == 1
-            d2Tdx2 = (T(i+1) - 2*T(i) + 22) / dx^2; %% Assuming room temp outside of skin
+            d2Tdx2 = (T(i+1) - 2*T(i) + 22) / dx^2; %% Assuming room temp outside of skin - BC
         elseif i == Nx
-            d2Tdx2 = (37 - 2*T(i) + 22) / dx^2; %% Assuming body temp at end of tissue
+            d2Tdx2 = (37 - 2*T(i) + 22) / dx^2; %% Assuming body temp at end of tissue - BC
         else
             d2Tdx2 = (T(i+1) - 2*T(i) + T(i-1)) / dx^2;
         end
@@ -156,10 +155,6 @@ for t = 1:Nt
         T_new(i) = T(i) + dt * (dTdt + tau_q(L) .* dTdt - tau_T(L) .* d2Tdt2 + (k(L) + k_star(L) .* tau_v(L)) .* dTdt);
 
     end
-
-    % --- Boundary conditions ---
-    % T_new(1) = T0(1);             % Dirichlet (left side is constant?)
-    T_new(end) = T_new(end-1);     % Neumann (right, insulated)
 
     % --- INTERFACE ENFORCEMENT ---
 
