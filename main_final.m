@@ -175,7 +175,7 @@ for j = 1:numel(snapshot_times)
          'DisplayName', sprintf('t = %.1f s', snapshot_times(j)));
 end
 
-ylim([35 45])
+ylim([36 50])
 xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',16)
 xline((L_epi)*10^3,'-',{'Derm'},'HandleVisibility','off','Fontsize',16)
 xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsize',16)
@@ -191,6 +191,7 @@ hold off;
 figure;
 plot(time(1:length(T_tumor)), T_tumor, 'r', 'LineWidth', 2);
 xlim([0 10])
+ylim([36 50])
 xlabel('time (s)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
 title('Temperature at Tumor Location vs. Time','FontSize',20);

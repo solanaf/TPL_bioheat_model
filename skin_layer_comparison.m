@@ -35,9 +35,9 @@ layer(x > L_epi + L_derm) = 3;                          % Subcutaneous
 %% 2) CONSTANTS AND PARAMETERS
 % ------------ Physical Parameters ------------
 % Skin Layer params
-rho    = [1150 1116 900];   % [kg/m^3]  Tissue density (layers)
-c      = [3590 3300 2500];  % [J/(kg·°C)]  Tissue specific heat
-k      = [0.2 0.45 0.3];    % [W/(m·°C)]  Thermal conductivity
+% rho    = [1150 1116 900];   % [kg/m^3]  Tissue density (layers)
+% c      = [3590 3300 2500];  % [J/(kg·°C)]  Tissue specific heat
+% k      = [0.2 0.45 0.3];    % [W/(m·°C)]  Thermal conductivity
 k_star = [0.1 0.1 0.1];     % [W/(m·°C·s)]  Hyperbolic‐term coefficient
 
 % Blood params
@@ -55,7 +55,7 @@ T0     = 37;      % [°C]            Initial tissue temperature
 % Q_r(i) = rho * S * P * exp( -a0*( x(i) - x_ast )^2 )
 S      = 15;       % “per‐kg” scaling factor
 P      = 35;      % “power” factor (tune as needed)
-% a0     = 1e6;   % [1/m]  Gaussian width control
+a0     = 1e6;   % [1/m]  Gaussian width control
 
 % ------------ Water vaporization and diffusion ------------
 Da = 2.5e-5;    % m^2/s (air)
@@ -84,12 +84,29 @@ snapshot_times = linspace(2,max_time,5); % [2.5, 5.0, 7.5, 10.0];
 snap_idx = round(snapshot_times/dt) + 1;
 % e.g., 2.5/0.01 = 250 → +1 = 251 ⇒ t = (251−1)*0.01 = 2.50 s
 
-T_a0 = zeros(nx,4); % For storing T(x,t=10s) for a0 testing
-T_tumor_a0 = zeros(time_steps,4); % for storing tumor temp for a0 testing
+T_layers = zeros(nx,4); % For storing T(x,t=10s) for layer testing
+T_tumor_layers = zeros(time_steps,4); % for storing tumor temp for layer testing
 
-z = 1;
-a0s = [5e5 1e6 2e6 5e6]
-for a0 = a0s
+for layer_test = 1:4
+
+    if layer_test == 1 % Heterogeneous case
+        rho    = [1150 1116 900];   % [kg/m^3]  Tissue density (layers)
+        c      = [3590 3300 2500];  % [J/(kg·°C)]  Tissue specific heat
+        k      = [0.2 0.45 0.3];    % [W/(m·°C)]  Thermal conductivity
+    elseif layer_test == 2 % Treat all as epidermis
+        rho    = [1150 1150 1150];   % [kg/m^3]  Tissue density (layers)
+        c      = [3590 3590 3590];  % [J/(kg·°C)]  Tissue specific heat
+        k      = [0.2 0.2 0.2];    % [W/(m·°C)]  Thermal conductivity
+    elseif layer_test == 3 % Treat all as dermis
+        rho    = [1116 1116 1116];   % [kg/m^3]  Tissue density (layers)
+        c      = [3300 3300 3300];  % [J/(kg·°C)]  Tissue specific heat
+        k      = [0.45 0.45 0.45];    % [W/(m·°C)]  Thermal conductivity
+    elseif layer_test == 4 % Treat all as subq
+        rho    = [900 900 900];   % [kg/m^3]  Tissue density (layers)
+        c      = [2500 2500 2500];  % [J/(kg·°C)]  Tissue specific heat
+        k      = [0.3 0.3 0.3];    % [W/(m·°C)]  Thermal conductivity
+    end
+
     T_snapshots = zeros(nx, numel(snapshot_times));  
     % Each column j holds T(x) at t = snapshot_times(j)
     
@@ -173,30 +190,32 @@ for a0 = a0s
     end
 
     %% Store profile for given P to be compared after
-    T_a0(:,z) = T_snapshots(:,end);
-    T_tumor_a0(:,z) = T_tumor;
-    z = z+1;
+    T_layers(:,layer_test) = T_snapshots(:,end);
+
+    T_tumor_layers(:,layer_test) = T_tumor;
 
 end % end of testing parameter loop (power)
 
-%% Plot T(x) for a0s
+%% Plot T(x) for Layers 
+legend_layers = ["3-layer Model","Epidermis Homogeneity", "Dermis Homogeneity", "Subcutaneous Homeogeneity"];
+
 figure('Position',[200,200,800,500]);
 hold on;
 
-colors = lines(numel(a0s));  
-for j = 1:size(T_a0,2)
-    plot(x*1000, T_a0(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
-         'DisplayName', sprintf('a0 = %.1e m^-^1', a0s(j)));
+colors = lines(numel(legend_layers));  
+for j = 1:size(T_layers,2)
+    plot(x*1000, T_layers(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
+         'DisplayName', num2str(legend_layers(j)));
 end
 
 ylim([36 50])
-xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',16)
-xline((L_epi)*10^3,'-',{'Derm'},'HandleVisibility','off','Fontsize',16)
-xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsize',16)
+% xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',16)
+% xline((L_epi)*10^3,'-',{'Derm'},'HandleVisibility','off','Fontsize',16)
+% xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsize',16)
 xline(x_ast*10^3,'-r',{'Tumor'},'LineWidth',5,'HandleVisibility','off','Fontsize',20)
 xlabel('Distance (mm)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
-title(['Temperature Profile T(t=10s,x), Various a0s'],'Fontsize',20);
+title(['Temperature Profile T(t=10s,x), Skin Layers'],'Fontsize',20);
 legend('Location','northeast','FontSize',12);
 grid on;
 hold off;
@@ -206,17 +225,17 @@ hold off;
 figure('Position',[200,200,800,500]);
 hold on;
 
-colors = lines(numel(a0s));  
-for j = 1:size(T_a0,2)
-    plot(time, T_tumor_a0(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
-         'DisplayName', sprintf('a0 = %.1e m^-^1', a0s(j)));
+colors = lines(numel(legend_layers));  
+for j = 1:size(T_layers,2)
+    plot(time, T_tumor_layers(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
+         'DisplayName', num2str(legend_layers(j)));
 end
 
 xlim([0 10])
 ylim([36 50])
 xlabel('time (s)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
-title(['Temperature at Tumor Location vs. Time, Various a0s'],'Fontsize',20);
+title(['Temperature at Tumor Location vs. Time, Skin Layers'],'Fontsize',20);
 legend('Location','best','FontSize',12);
 grid on;
 hold off;

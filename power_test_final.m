@@ -84,6 +84,9 @@ snapshot_times = linspace(2,max_time,5); % [2.5, 5.0, 7.5, 10.0];
 snap_idx = round(snapshot_times/dt) + 1;
 % e.g., 2.5/0.01 = 250 → +1 = 251 ⇒ t = (251−1)*0.01 = 2.50 s
 
+T_p = zeros(nx,4); % For storing T(x,t=10s) for power testing
+T_tumor_p = zeros(time_steps,4); % for storing tumor temp for power testing
+
 z = 1;
 powers = 10:5:50
 for P = powers
@@ -171,23 +174,22 @@ for P = powers
 
     %% Store profile for given P to be compared after
     T_p(:,z) = T_snapshots(:,end);
-
     T_tumor_p(:,z) = T_tumor;
     z = z+1;
 
 end % end of testing parameter loop (power)
 
-%% Plot Power 
+%% Plot T(x) for Powers
 figure('Position',[200,200,800,500]);
 hold on;
 
-colors = lines(size(T_p,2));  
+colors = lines(numel(powers));  
 for j = 1:size(T_p,2)
     plot(x*1000, T_p(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
          'DisplayName', sprintf('P = %.1f W', powers(j)));
 end
 
-ylim([35 45])
+ylim([36 50])
 xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',16)
 xline((L_epi)*10^3,'-',{'Derm'},'HandleVisibility','off','Fontsize',16)
 xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsize',16)
@@ -211,6 +213,7 @@ for j = 1:size(T_p,2)
 end
 
 xlim([0 10])
+ylim([36 50])
 xlabel('time (s)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
 title(['Temperature at Tumor Location vs. Time, Various Powers'],'Fontsize',20);
