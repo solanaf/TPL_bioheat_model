@@ -54,8 +54,8 @@ T0     = 37;      % [°C]            Initial tissue temperature
 % ------------ Gaussian‐source parameters ------------
 % Q_r(i) = rho * S * P * exp( -a0*( x(i) - x_ast )^2 )
 S      = 15;       % “per‐kg” scaling factor
-% P    = 30;      % “power” factor (tune as needed)
-a0     = 1e6;   % [1/m]  Gaussian width control
+P      = 50;      % “power” factor (tune as needed)
+% a0     = 1e6;   % [1/m]  Gaussian width control
 
 % ------------ Water vaporization and diffusion ------------
 Da = 2.5e-5;    % m^2/s (air)
@@ -85,8 +85,8 @@ snap_idx = round(snapshot_times/dt) + 1;
 % e.g., 2.5/0.01 = 250 → +1 = 251 ⇒ t = (251−1)*0.01 = 2.50 s
 
 z = 1;
-powers = 10:5:50
-for P = powers
+a0s = [5e5 1e6 2e6 5e6]
+for a0 = a0s
     T_snapshots = zeros(nx, numel(snapshot_times));  
     % Each column j holds T(x) at t = snapshot_times(j)
     
@@ -170,9 +170,9 @@ for P = powers
     end
 
     %% Store profile for given P to be compared after
-    T_p(:,z) = T_snapshots(:,end);
+    T_a0(:,z) = T_snapshots(:,end);
 
-    T_tumor_p(:,z) = T_tumor;
+    T_tumor_a0(:,z) = T_tumor;
     z = z+1;
 
 end % end of testing parameter loop (power)
@@ -181,10 +181,10 @@ end % end of testing parameter loop (power)
 figure('Position',[200,200,800,500]);
 hold on;
 
-colors = lines(size(T_p,2));  
-for j = 1:size(T_p,2)
-    plot(x*1000, T_p(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
-         'DisplayName', sprintf('P = %.1f W', powers(j)));
+colors = lines(size(T_a0,2));  
+for j = 1:size(T_a0,2)
+    plot(x*1000, T_a0(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
+         'DisplayName', sprintf('a0 = %.1e m^-^1', a0s(j)));
 end
 
 ylim([35 45])
@@ -194,7 +194,7 @@ xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsiz
 xline(x_ast*10^3,'-r',{'Tumor'},'LineWidth',5,'HandleVisibility','off','Fontsize',20)
 xlabel('Distance (mm)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
-title(['Temperature Profile T(t=10s,x), Various Powers'],'Fontsize',20);
+title(['Temperature Profile T(t=10s,x), Various a0s'],'Fontsize',20);
 legend('Location','northeast','FontSize',12);
 grid on;
 hold off;
@@ -204,16 +204,16 @@ hold off;
 figure('Position',[200,200,800,500]);
 hold on;
 
-colors = lines(numel(powers));  
-for j = 1:size(T_p,2)
-    plot(time, T_tumor_p(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
-         'DisplayName', sprintf('P = %.1f W', powers(j)));
+colors = lines(numel(a0s));  
+for j = 1:size(T_a0,2)
+    plot(time, T_tumor_a0(:,j), 'Color', colors(j,:), 'LineWidth',1.5, ...
+         'DisplayName', sprintf('a0 = %.1e m^-^1', a0s(j)));
 end
 
 xlim([0 10])
 xlabel('time (s)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
-title(['Temperature at Tumor Location vs. Time, Various Powers'],'Fontsize',20);
+title(['Temperature at Tumor Location vs. Time, Various a0s'],'Fontsize',20);
 legend('Location','best','FontSize',12);
 grid on;
 hold off;
