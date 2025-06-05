@@ -54,7 +54,7 @@ T0     = 37;      % [°C]            Initial tissue temperature
 % ------------ Gaussian‐source parameters ------------
 % Q_r(i) = rho * S * P * exp( -a0*( x(i) - x_ast )^2 )
 S      = 15;       % “per‐kg” scaling factor
-P      = 50;      % “power” factor (tune as needed)
+P      = 35;      % “power” factor (tune as needed)
 % a0     = 1e6;   % [1/m]  Gaussian width control
 
 % ------------ Water vaporization and diffusion ------------
@@ -74,7 +74,7 @@ nabla_r2 = (Lx/3)^2;
 
 % ---------- Hyperbolic relaxation times ---------------
 tau_q = 10;   % [s]
-tau_T = 2;   % [s]
+tau_T = 20;   % [s]
 tau_v = 1;   % [s]
 
 

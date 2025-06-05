@@ -74,7 +74,7 @@ nabla_r2 = (Lx/3)^2;
 
 % ---------- Hyperbolic relaxation times ---------------
 tau_q = 10;   % [s]
-tau_T = 2;   % [s]
+tau_T = 20;   % [s]
 tau_v = 1;   % [s]
 
 
