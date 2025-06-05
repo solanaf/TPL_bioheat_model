@@ -190,6 +190,7 @@ for j = 1:size(T_a0,2)
 end
 
 ylim([36 50])
+xlim([0 Lx*10^3])
 xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',16)
 xline((L_epi)*10^3,'-',{'Derm'},'HandleVisibility','off','Fontsize',16)
 xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsize',16)

@@ -84,10 +84,10 @@ snapshot_times = linspace(2,max_time,5); % [2.5, 5.0, 7.5, 10.0];
 snap_idx = round(snapshot_times/dt) + 1;
 % e.g., 2.5/0.01 = 250 → +1 = 251 ⇒ t = (251−1)*0.01 = 2.50 s
 
-T_layers = zeros(nx,4); % For storing T(x,t=10s) for layer testing
-T_tumor_layers = zeros(time_steps,4); % for storing tumor temp for layer testing
+T_layers = zeros(nx,5); % For storing T(x,t=10s) for layer testing
+T_tumor_layers = zeros(time_steps,5); % for storing tumor temp for layer testing
 
-for layer_test = 1:4
+for layer_test = 1:5
 
     if layer_test == 1 % Heterogeneous case
         rho    = [1150 1116 900];   % [kg/m^3]  Tissue density (layers)
@@ -101,7 +101,7 @@ for layer_test = 1:4
         rho    = [1116 1116 1116];   % [kg/m^3]  Tissue density (layers)
         c      = [3300 3300 3300];  % [J/(kg·°C)]  Tissue specific heat
         k      = [0.45 0.45 0.45];    % [W/(m·°C)]  Thermal conductivity
-    elseif layer_test == 4 % Treat all as subq
+    elseif layer_test == 4 | 5 % Treat all as subq
         rho    = [900 900 900];   % [kg/m^3]  Tissue density (layers)
         c      = [2500 2500 2500];  % [J/(kg·°C)]  Tissue specific heat
         k      = [0.3 0.3 0.3];    % [W/(m·°C)]  Thermal conductivity
@@ -154,6 +154,9 @@ for layer_test = 1:4
             Qr = rho(L) * S * P * exp( -a0 * (x(i) - x_ast)^2 );  
     
             % Add up all heat sources to consolidate
+            if layer_test == 5
+                Qd = 0; Qv = 0;
+            end
             Q_tot = Qm + Qd + Qb + Qv + Qr;
     
             % 2nd‐spatial derivative (finite difference)
@@ -197,7 +200,7 @@ for layer_test = 1:4
 end % end of testing parameter loop (power)
 
 %% Plot T(x) for Layers 
-legend_layers = ["3-layer Model","Epidermis Homogeneity", "Dermis Homogeneity", "Subcutaneous Homeogeneity"];
+legend_layers = ["3-layer Model with Qv/Qd","Epidermis Homogeneity", "Dermis Homogeneity", "Subcutaneous Homeogeneity", "Subcutaneous Homogeneity, no Qv/Qd"];
 
 figure('Position',[200,200,800,500]);
 hold on;
@@ -209,6 +212,7 @@ for j = 1:size(T_layers,2)
 end
 
 ylim([36 50])
+xlim([0 Lx*10^3])
 % xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',16)
 % xline((L_epi)*10^3,'-',{'Derm'},'HandleVisibility','off','Fontsize',16)
 % xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsize',16)
@@ -239,3 +243,25 @@ title(['Temperature at Tumor Location vs. Time, Skin Layers'],'Fontsize',20);
 legend('Location','best','FontSize',12);
 grid on;
 hold off;
+
+T_layers_difference = T_layers(:,1)-T_layers(:,5);
+T_tumor_layers_difference = T_tumor_layers(:,1)-T_tumor_layers(:,5);
+
+figure
+subplot(1,2,1)
+hold on
+plot(x*10^3,T_layers_difference)
+xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',14)
+xline((L_epi)*10^3,'-',{'Derm'},'HandleVisibility','off','Fontsize',14)
+xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsize',14)
+xline(x_ast*10^3,'-r',{'Tumor'},'LineWidth',3,'HandleVisibility','off','Fontsize',18)
+title('Difference in T(x,t=10s)','FontSize',16)
+xlabel('Distance (mm)','Fontsize',14);
+ylabel('Temperature (°C)','Fontsize',14);
+hold off
+
+subplot(1,2,2)
+plot(time,T_tumor_layers_difference)
+title('Difference in T(x=Tumor,t)','FontSize',16)
+xlabel('time (s)','Fontsize',14);
+ylabel('Temperature (°C)','Fontsize',14);
