@@ -191,7 +191,7 @@ ylim([35 45])
 xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',16)
 xline((L_epi)*10^3,'-',{'Derm'},'HandleVisibility','off','Fontsize',16)
 xline((L_epi+L_derm)*10^3,'-',{'Subcutaneous'},'HandleVisibility','off','Fontsize',16)
-xline(x_ast*10^3,'-r',{'Tumor'},'LineWidth',10,'HandleVisibility','off','Fontsize',20)
+xline(x_ast*10^3,'-r',{'Tumor'},'LineWidth',5,'HandleVisibility','off','Fontsize',20)
 xlabel('Distance (mm)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
 title(['Temperature Profile T(t=10s,x), Various Powers'],'Fontsize',20);
