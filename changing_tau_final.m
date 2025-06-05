@@ -85,7 +85,7 @@ for j = 1:3
             L = layer(i);
             
             % 1) Metabolic heat (layer-dependent Tl):
-            Qm = Qm0 * (1 + (Tl(L) - T0)/10);
+            Qm = Qm0 * (1 + (T(i) - Tl(L))/10);
             % 2) Water diffusion (not varying here, same as original):
             Da     = 2.5e-5;  Mw = 0.018;  Ra  = 8.314;
             Tw     = 306;     Pw = 5600;  RH  = 0.5;
@@ -160,7 +160,7 @@ for j = 1:3
             L = layer(i);
             
             % (Same source calculations as above)
-            Qm = Qm0 * (1 + (Tl(L) - T0)/10);
+            Qm = Qm0 * (1 + (T(i) - Tl(L))/10);
             Da     = 2.5e-5;  Mw = 0.018;  Ra  = 8.314;
             Tw     = 306;     Pw = 5600;  RH  = 0.5;
             delta  = 1e-4;    c_air = 1005;
@@ -221,7 +221,7 @@ for j = 1:3
         for i = 2:(nx-1)
             L = layer(i);
             
-            Qm = Qm0 * (1 + (Tl(L) - T0)/10);
+            Qm = Qm0 * (1 + (T(i) - Tl(L))/10);
             Da     = 2.5e-5;  Mw = 0.018;  Ra  = 8.314;
             Tw     = 306;     Pw = 5600;  RH  = 0.5;
             delta  = 1e-4;    c_air = 1005;
