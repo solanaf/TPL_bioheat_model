@@ -48,8 +48,7 @@ cb     = 4000;    % [J/(kg·°C)]     Blood specific heat
 
 Qm0    = 50.65;   % [W/m^3]         Metabolic heat (uniform)
 Tb     = 37;      % [°C]            Arterial blood temperature
-Tl     = [37 37 37];      % [°C]    Ambient/tissue reference
-T0     = 37;      % [°C]            Initial tissue temperature
+Tl     = [37 37 37];      % [°C]    Initial Ambient/tissue reference
 
 % ------------ Gaussian‐source parameters ------------
 % Q_r(i) = rho * S * P * exp( -a0*( x(i) - x_ast )^2 )
@@ -97,7 +96,9 @@ for a0 = a0s
     T_tumor = zeros(1, time_steps);
     
     % --------- Initialize temperature fields at t=0 -------------
-    T     = ones(nx,1) * T0;  
+    T     = ones(nx,1) * T0; 
+    T(find(layer == 1)) = Tl(1); T(find(layer == 2)) = Tl(2);
+    T(find(layer == 3)) = Tl(3);
     T_new = T;   
     dTdt   = zeros(nx,1);
     d2Tdt2 = zeros(nx,1);
@@ -112,7 +113,7 @@ for a0 = a0s
     
             % (b) Calculate Heat Source values for given spatial step
             % Metabolic Heat Source:
-            Qm = Qm0 * (1 + (Tl(L) - T0)/10);         % [W/m^3] metabolic
+            Qm = Qm0 * (1 + (T(i) - Tl(L))/10);         % [W/m^3] metabolic
     
             % Water diffusion:
             Qd = (Df(L) * cw * (rho_s - rho_c) / nabla_r2) * (T(i) - Tl(L));
@@ -154,10 +155,10 @@ for a0 = a0s
         end
     
         % (c) Convective (Robin) BC at left boundary (i = 1):
-        T_new(1) = (h*dx*Tl(1) + k(L) * T_new(2)) / (h*dx + k(L));
+        T_new(1) = (h*dx*T(1) + k(L) * 22) / (h*dx + k(L)); % 22C is RT
     
         % (d) Convective (Robin) BC at right boundary (i = nx):
-        T_new(nx) = (h*dx*Tl(end) + k(L) * T_new(nx-1)) / (h*dx + k(L));
+        T_new(nx) = (h*dx*T(end) + k(L) * 37) / (h*dx + k(L)); % 27 is body temp
     
         % (e) Advance to next timestep
         T = T_new;
@@ -213,7 +214,7 @@ for j = 1:size(T_a0,2)
          'DisplayName', sprintf('a0 = %.1e m^-^1', a0s(j)));
 end
 
-xlim([0 10])
+xlim([0 time(end)])
 ylim([36 50])
 xlabel('time (s)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
