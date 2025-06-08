@@ -96,7 +96,7 @@ for a0 = a0s
     T_tumor = zeros(1, time_steps);
     
     % --------- Initialize temperature fields at t=0 -------------
-    T     = ones(nx,1) * T0; 
+    T = ones(nx,1); 
     T(find(layer == 1)) = Tl(1); T(find(layer == 2)) = Tl(2);
     T(find(layer == 3)) = Tl(3);
     T_new = T;   
@@ -155,10 +155,12 @@ for a0 = a0s
         end
     
         % (c) Convective (Robin) BC at left boundary (i = 1):
-        T_new(1) = (h*dx*T(1) + k(L) * 22) / (h*dx + k(L)); % 22C is RT
+        % Forward Euler Approx dx/t
+        T_new(1) = (k(1) * T(2) + h*dx*22) / (h*dx + k(1)); % 22C is RT
     
         % (d) Convective (Robin) BC at right boundary (i = nx):
-        T_new(nx) = (h*dx*T(end) + k(L) * 37) / (h*dx + k(L)); % 27 is body temp
+        % Backward Euler Approx dx/dt
+        T_new(nx) = (h*dx*37 - k(3) * T(end-1)) / (h*dx - k(3)); % 37C is body temp
     
         % (e) Advance to next timestep
         T = T_new;
