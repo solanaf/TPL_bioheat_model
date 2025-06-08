@@ -90,7 +90,7 @@ T_snapshots = zeros(nx, numel(snapshot_times));
 T_tumor = zeros(1, time_steps);
 
 % --------- Initialize temperature fields at t=0 -------------
-T     = ones(nx,1) * T0;
+T     = ones(nx,1);
 T(find(layer == 1)) = Tl(1); T(find(layer == 2)) = Tl(2);
 T(find(layer == 3)) = Tl(3);
 T_new = T;   
@@ -187,7 +187,7 @@ xline(x_ast*10^3,'-r',{'Tumor'},'LineWidth',5,'HandleVisibility','off','Fontsize
 xlabel('Distance (mm)','Fontsize',16);
 ylabel('Temperature (°C)','Fontsize',16);
 title(['Temperature Profile T(t=10s,x), Various times'],'Fontsize',20);
-legend('Location','northeast','FontSize',12);
+legend('Location','northeast','FontSize',16);
 grid on;
 hold off;
 

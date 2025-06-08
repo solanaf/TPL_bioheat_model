@@ -113,7 +113,7 @@ for layer_test = 1:5
     T_tumor = zeros(1, time_steps);
     
     % --------- Initialize temperature fields at t=0 -------------
-    T     = ones(nx,1) * T0;  
+    T     = ones(nx,1);  
     T(find(layer == 1)) = Tl(1); T(find(layer == 2)) = Tl(2);
     T(find(layer == 3)) = Tl(3);
     T_new = T;   
@@ -251,7 +251,7 @@ T_layers_difference = T_layers(:,1)-T_layers(:,5);
 T_tumor_layers_difference = T_tumor_layers(:,1)-T_tumor_layers(:,5);
 
 figure
-subplot(1,2,1)
+subplot(2,1,1)
 hold on
 plot(x*10^3,T_layers_difference)
 xline(0, '-',{'Epiderm'},'HandleVisibility','off','Fontsize',14)
@@ -263,9 +263,9 @@ xlabel('Distance (mm)','Fontsize',14);
 ylabel('Temperature (°C)','Fontsize',14);
 hold off
 
-subplot(1,2,2)
+subplot(2,1,2)
 plot(time,T_tumor_layers_difference)
-xlim([0 time()])
+xlim([0 time(end)])
 title('Difference in T(x=Tumor,t)','FontSize',16)
 xlabel('time (s)','Fontsize',14);
 ylabel('Temperature (°C)','Fontsize',14);
