@@ -1,8 +1,3 @@
-%% alright so this is the students paper dumbed down to 1D, and heat source Qr added to the tumor and the walls no longer kept at a constant temp
-%% i have it plotting temp vs distance over their skin slab of i think 50mm. this is not very good but im getting a graph that kinda makes sense as I increase
-%% the power and width of the gaussian heat source. sadly i did not try to implement any skin layers yet (me stupid) but i have something ?? idk lmk what u think
-
-
 %––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 % 1D hyperbolic bioheat w/ Gaussian tumor source, single k=0.3, finer mesh
 % and reduced dt for stability; snapshots at 2.5, 5, 7.5, 10 s in one plot.
