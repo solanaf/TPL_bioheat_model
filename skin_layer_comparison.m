@@ -1,6 +1,7 @@
 %––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 % 1D hyperbolic bioheat w/ Gaussian tumor source, 3 skin layers, finer mesh
-% and reduced dt for stability; snapshots at 2.5, 5, 7.5, 10 s in one plot.
+% and reduced dt for stability; TESTING EFFECT OF SKIN LAYERS & HEAT
+% SOURCES
 %––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
 
 clear; clc;
@@ -9,7 +10,7 @@ clear; clc;
 % Skin Layer thickness
 L_epi = 0.0015;   % Epidermis (1.5 mm)
 L_derm = 0.0035;  % Dermis (3.5 mm)
-L_subq = 0.01;    % Subcutaneous (10 mm)
+L_subq = 0.010;    % Subcutaneous (10 mm)
 Lx = L_epi + L_derm + L_subq; % Domain Length
 
 x_ast  = 0.008;   % [m]   Tumor center (midpoint of 0.05 m)

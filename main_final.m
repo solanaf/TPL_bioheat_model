@@ -1,5 +1,6 @@
 
 %––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
+% main_final.m
 % 1D hyperbolic bioheat w/ Gaussian tumor source, 3 skin layers, finer mesh
 % and reduced dt for stability; snapshots at 2.5, 5, 7.5, 10 s in one plot.
 %––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
