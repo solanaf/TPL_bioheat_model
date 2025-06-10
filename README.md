@@ -10,6 +10,12 @@ epidermis, dermis, subcutaneous
 * vaporization (epidermis)
 * hyperthermia device (modeled as Gaussian volume, targeted at tumor location)
 
+## Scripts
+* **changing\_tau\_final.m:** Performs the analysis under 'Varying Tau Parameters'
+* **a0\_test\_final.m & power\_test\_final.m:** Performs the analysis under 'Varying Targeted Heat Source Parameters'
+* **skin\_layer\_comparison.m:** Performs the analysis under 'Impact of Skin Layers and Heat Sources'
+* **main\_final.m:** Runs the model with optimized parameters
+
 ## Reference Papers:
 [1] Kumar, M., Upadhyay, S., Singh, S., & Rai, K. N. (2023). Mathematical modelling and simulation of three phase lag bio-heat transfer model during cancer treatment. International Journal of Thermal Sciences, 184, 108002.
 
